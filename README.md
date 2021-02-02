@@ -15,6 +15,6 @@ If you'd like to contribute, you're welcome to! Do note that this app *is* curre
 If you spot any security issues, please let us know! DMing us on Discord (listed below) is the best way to report those kinds of problems
 
 ## Support and donations
-Discord: (GS)#6969  ([support server](https://discord.gg/EvDmXGt))
-Patreon: [greysdawn](https://patreon.com/greysdawn)
-Ko-fi: [greysdawn](https://ko-fi.com/greysdawn)
+Discord: (GS)#6969  ([support server](https://discord.gg/EvDmXGt))  
+Patreon: [greysdawn](https://patreon.com/greysdawn)  
+Ko-fi: [greysdawn](https://ko-fi.com/greysdawn)  
