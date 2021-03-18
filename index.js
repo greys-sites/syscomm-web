@@ -9,37 +9,54 @@ const mongoose = require('mongoose');
 const app = express();
 app.use(express.json());
 
+const mongoStore = require('connect-mongo').default;
+
 const routes = {};
 
 app.use(sesh({
-	store: new (require('connect-mongo')(sesh))({ url: process.env.MONGO_URI }),
+	store: mongoStore.create({ mongoUrl: process.env.MONGO_URI }),
 	secret: process.env.SECRET,
 	resave: false,
 	saveUninitialized: false,
 	cookie: {
 		maxAge: 30 * 24 * 60 * 60 * 1000,
-		secure: true,
+		// secure: true,
 		sameSite: 'strict'
 	}
 }))
+
+console.log(process.env.APP_NAME);
 
 // csrf middleware
 app.use((req, res, next) => {
 	if(['GET', 'HEAD', 'OPTIONS'].includes(req.method))
 		return next();
-
 	if(!req.session.csrf) return next();
+	
 	if(req.headers['csrf-token'] !== req.session.csrf)
 		return res.status(403).send('Invalid CSRF token');
 
 	next();
 })
 
-// attempt to convert mongo docs in session storage
+// auth middleware
 app.use(async (req, res, next) => {
-	if(!req.session.user) return next();
+	if(!req.session.user && !req.headers.authorization) return next();
 
-	req.session.user = await mongoose.model('login').findOne( { _id: req.session.user._id });
+	var user = req.session.user;
+	if(req.headers.authorization) {
+		user = await mongoose.model('login').findOne({ token: req.headers.authorization });
+		if(!user) {
+			req.verified = false;
+			return next();
+		}
+		user = user.toObject();
+		delete user.password;
+		if(req.session.csrf) user.csrf = req.session.csrf;
+	}
+
+	req.verified = true;
+	req.user = user;
 	next()
 })
 

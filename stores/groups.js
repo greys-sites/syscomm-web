@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 const GroupSchema = new mongoose.Schema({
 	hid: { type: String, required: true, unique: true },
-	system: { type: String, required: true },
 	name: { type: String, required: true },
 	description: String,
 	color: String,
@@ -14,14 +13,15 @@ const GroupSchema = new mongoose.Schema({
 		visibility: Boolean
 	},
 	overrides: [{
-		type: mongoose.Schema.Types.ObjectId,
-		ref: 'system'
+		type: String
 	}]
 })
 
-GroupSchema.methods.getMembers = async function() {
-	return await this.db.model('member').find({ groups: this._id });
-}
+GroupSchema.virtual('members', {
+	ref: 'member',
+	localField: '_id',
+	foreignField: 'groups'
+})
 
-const Group = mongoose.model('group', GroupSchema);
-module.exports = { Group, GroupSchema };
+const Group = mongoose.model('group', GroupSchema)
+module.exports = { Group };

@@ -1,19 +1,18 @@
 const mongoose = require('mongoose');
-const { Group } = require('./groups')
+const { Group } = require('./groups');
+const { Tag } = require('./tags');
 
 const MemberSchema = new mongoose.Schema({
-	hid: { type: String, required: true, unique: true },
 	system: { type: String, required: true },
+	hid: { type: String, required: true, unique: true },
 	name: { type: String, required: true },
 	description: String,
 	pronouns: String,
 	birthday: String,
 	color: String,
 	avatar: String,
-	groups: [{
-		type: mongoose.Schema.Types.ObjectId,
-		ref: Group
-	}],
+	groups: [mongoose.Schema.Types.ObjectId],
+	tags: [mongoose.Schema.Types.ObjectId],
 	created: { type: Date, default: () => new Date() },
 	privacy: {
 		description: Boolean,
@@ -22,10 +21,10 @@ const MemberSchema = new mongoose.Schema({
 		visibility: Boolean
 	},
 	overrides: [{
-		type: mongoose.Schema.Types.ObjectId,
-		ref: 'system'
-	}]
+		type: String
+	}],
+	password: String // for private notes
 })
 
 const Member = mongoose.model('member', MemberSchema);
-module.exports = { Member, MemberSchema };
+module.exports = { MemberSchema, Member };

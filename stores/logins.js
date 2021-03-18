@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const LoginSchema = new mongoose.Schema({
+	hid: { type: String, required: true, unique: true },
 	username: {
 		type: String,
 		required: true,
@@ -20,10 +21,17 @@ const LoginSchema = new mongoose.Schema({
 	token: String
 })
 
-LoginSchema.post('findOne', async (doc) => {
-	var systems = await mongoose.model('system').find({ account: doc._id });
-	doc.systems = systems;
-	return doc;
+LoginSchema.virtual('systems', {
+	ref: 'system',
+	foreignField: 'account',
+	localField: '_id'
+})
+
+LoginSchema.set('toJSON', { getters: true, /*virtuals: true*/ });
+LoginSchema.set('toObject', { getters: true, /*virtuals: true*/ });
+
+LoginSchema.pre('findOne', function() {
+	this.populate('systems');
 })
 
 const Login = mongoose.model('login', LoginSchema);
