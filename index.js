@@ -25,8 +25,6 @@ app.use(sesh({
 	}
 }))
 
-console.log(process.env.APP_NAME);
-
 // csrf middleware
 app.use((req, res, next) => {
 	if(['GET', 'HEAD', 'OPTIONS'].includes(req.method))
@@ -60,7 +58,7 @@ app.use(async (req, res, next) => {
 	next()
 })
 
-const index = fs.readFileSync(__dirname + '/frontend/build/index.html', 'utf8');
+const index = fs.readFileSync(__dirname + '/frontend/public/index.html', 'utf8');
 
 const setup = async () => {
 	mongoose.connect(process.env.MONGO_URI, (err) => {
@@ -76,7 +74,7 @@ const setup = async () => {
 		for(var r of routes[n]) app[r.method](r.path, r.func)
 	}
 
-	app.use(express.static(__dirname + '/frontend/build'));
+	app.use(express.static(__dirname + '/frontend/public'));
 	app.use(async (req, res) => {
 		res.send(
 			index.replace('$TITLE','Syscomm Notes')
