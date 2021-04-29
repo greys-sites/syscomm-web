@@ -6,6 +6,7 @@ const GroupSchema = new mongoose.Schema({
 	description: String,
 	color: String,
 	avatar: String,
+	members: [ String ], // hids
 	created: { type: Date, default: () => new Date() },
 	privacy: {
 		description: Boolean,
@@ -17,11 +18,5 @@ const GroupSchema = new mongoose.Schema({
 	}]
 })
 
-GroupSchema.virtual('members', {
-	ref: 'member',
-	localField: '_id',
-	foreignField: 'groups'
-})
-
-const Group = mongoose.model('group', GroupSchema)
-module.exports = { Group };
+// const Group = mongoose.model('group', GroupSchema)
+module.exports = { GroupSchema };

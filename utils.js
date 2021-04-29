@@ -13,7 +13,7 @@ module.exports = {
 		if(!obj.privacy || Object.keys(obj.privacy).length == 0)
 			return obj;
 
-		var override = [...(obj.overrides || []), obj.hid].includes(requester?.hid);
+		var override = [...(obj.overrides || []), obj.system ? obj.system : obj.hid].includes(requester?.hid);
 		for(var key in Object.keys(obj.privacy)) {
 			if(obj.privacy[key]) {
 				if(!override) {

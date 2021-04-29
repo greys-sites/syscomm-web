@@ -37,7 +37,6 @@ module.exports = [
 			if(!req.user) return res.status(401).send();
 
 			var data = req.body;
-			console.log(data);
 			data.account = req.user._id;
 			data.hid = genHid();
 
