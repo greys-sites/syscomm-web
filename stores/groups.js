@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 
 const GroupSchema = new mongoose.Schema({
+	account: { type: mongoose.Schema.Types.ObjectId, ref: 'login', required: true },
+	system: String,
 	hid: { type: String, required: true, unique: true },
 	name: { type: String, required: true },
 	description: String,
@@ -18,5 +20,5 @@ const GroupSchema = new mongoose.Schema({
 	}]
 })
 
-// const Group = mongoose.model('group', GroupSchema)
-module.exports = { GroupSchema };
+const Group = mongoose.model('group', GroupSchema)
+module.exports = { GroupSchema, Group };

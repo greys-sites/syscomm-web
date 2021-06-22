@@ -1,4 +1,5 @@
 const { System } = require('../stores/systems');
+const { Member } = require('../stores/members');
 const { applyPrivacy, genHid } = require('../utils')
 const PATCHABLE = [
 	'system',
@@ -7,7 +8,6 @@ const PATCHABLE = [
 	'pronouns',
 	'color',
 	'avatar',
-	'tags',
 	'privacy',
 	'overrides'
 ];
@@ -20,7 +20,7 @@ module.exports = [
 			var system = await System.findOne({ hid: req.params.sid });
 			if(!system) return res.status(404).send();
 
-			if(!system.nembers?.[0]) return res.status(200).send([]);
+			if(!system.members?.[0]) return res.status(200).send([]);
 			var members = system.members.map(m => {
 				m = m.toObject();
 				if(!m.overrides || m.overrides.length == 0)
@@ -32,7 +32,7 @@ module.exports = [
 		}
 	},
 	{
-		path: ['/api/system/:sid/member/:hid', '/api/s/:sid/m/:hid'],
+		path: ['/api/member/:hid', '/api/m/:hid'],
 		method: 'get',
 		func: async (req, res) => {
 			var system = await System.findOne({ hid: req.params.sid });
@@ -47,7 +47,7 @@ module.exports = [
 		}
 	},
 	{
-		path: ['/api/system/:sid/member', '/api/s/:sid/m'],
+		path: ['/api/s/:id/member', '/api/s:id/m'],
 		method: 'put',
 		func: async (req, res) => {
 			if(!req.user) return res.status(401).send();
@@ -57,16 +57,13 @@ module.exports = [
 			if(!system) return res.status(404).send('System not found');
 			if(system.account != req.user._id)
 				return res.status(403).send("That system doesn't belong to you");
-			if(!system.members) system.members = [];
-			
-			var data = req.body;
-			delete data.system;
-			data.hid = genHid();
 
-			system.members[0] = data
-			console.log(system.members);
+			var data = req.body;
+			data.hid = genHid();
+			var member = await Member.create(req.body);
+			
 			try {
-				await system.save()
+				await member.save()
 			} catch(e) {
 				return res.status(500).send(e.message);
 			}
@@ -75,20 +72,16 @@ module.exports = [
 		}
 	},
 	{
-		path: ['/api/s/:sid/m/:hid', '/api/system/:sid/member/:hid'],
+		path: ['/api/m/:hid', '/api/member/:hid'],
 		method: 'patch',
 		func: async (req, res) => {
 			if(!req.user) return res.status(401).send();
 			if(!req.body) return res.status(400).send();
-
-			var system = await System.findOne({ hid: req.params.hid });
-			if(!system) return res.status(404).send('System not found');
-			if(system.account != req.user.id)
-				return res.status(403).send("That system doesn't belong to you");
 			
-			var member = system.members.find(m => m.hid == req.params.hid);
+			var member = await Member.find({hid: req.params.hid});
 			if(!member) return res.status(404).send();
-			var index = system.members.findIndex(m => m.hid == req.params.hid);
+
+			if(member.account != req.user._id) return res.status(403).send("That member doesn't belong to you")
 
 			for(var k of Object.keys(req.body)) {
 				if(!PATCHABLE.includes(k)) continue;
@@ -96,8 +89,25 @@ module.exports = [
 			}
 
 			try {
-				system.members[index] = members;
-				await system.save();
+				await member.save();
+			} catch(e) {
+				return res.status(500).send(e);
+			}
+
+			return res.status(200).send(member);
+		}
+	}, {
+		path: ['/api/member/:id', '/api/m/:id'],
+		method: 'delete',
+		func: async (req, res) => {
+			if(!req.user) return res.status(401).send();
+			
+			var member = await Member.find({hid: req.params.hid});
+			if(!member) return res.status(404).send();
+			if(member.account != req.user._id) return res.status(403).send("That member doesn't belong to you")
+
+			try {
+				await member.delete();
 			} catch(e) {
 				return res.status(500).send(e);
 			}

@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 
 const MemberSchema = new mongoose.Schema({
+	account: { type: mongoose.Schema.Types.ObjectId, ref: 'login', required: true },
+	system: {type: String },
 	hid: { type: String, required: true, unique: true },
 	name: { type: String, required: true },
 	description: String,
@@ -21,5 +23,9 @@ const MemberSchema = new mongoose.Schema({
 	password: String // for private notes
 })
 
-// const Member = mongoose.model('member', MemberSchema);
-module.exports = { MemberSchema };
+MemberSchema.methods.delete = function() {
+	return Member.deleteOne({_id: this._id})
+}
+
+const Member = mongoose.model('member', MemberSchema);
+module.exports = { MemberSchema, Member };

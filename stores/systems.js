@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const { MemberSchema } = require('./members');
-const { GroupSchema } = require('./groups');
-const { TagSchema } = require('./tags');
+const { Member } = require('./members');
+const { Group } = require('./groups');
+const { Tag } = require('./tags');
 
 const SystemSchema = new mongoose.Schema({
 	account: { type: mongoose.Schema.Types.ObjectId, ref: 'login', required: true },
@@ -11,9 +11,6 @@ const SystemSchema = new mongoose.Schema({
 	pronouns: String,
 	color: String,
 	avatar: String,
-	members: [ MemberSchema ],
-	groups: [ GroupSchema ],
-	tags: [ TagSchema ],
 	created: { type: Date, default: () => new Date() },
 	privacy: {
 		query: Boolean,
@@ -27,26 +24,50 @@ const SystemSchema = new mongoose.Schema({
 	}]
 });
 
-// SystemSchema.virtual('members', {
-	// ref: 'member',
-	// localField: 'hid',
-	// foreignField: 'system'
-// })
-// 
-// SystemSchema.virtual('groups', {
-	// ref: 'group',
-	// localField: 'hid',
-	// foreignField: 'system'
-// })
-// 
-// SystemSchema.virtual('tags', {
-	// ref: 'tag',
-	// localField: 'hid',
-	// foreignField: 'system'
-// })
+SystemSchema.virtual('members', {
+	ref: 'member',
+	localField: 'hid',
+	foreignField: 'system'
+})
+
+SystemSchema.virtual('groups', {
+	ref: 'group',
+	localField: 'hid',
+	foreignField: 'system'
+})
+
+SystemSchema.virtual('tags', {
+	ref: 'tag',
+	localField: 'hid',
+	foreignField: 'system'
+})
 
 SystemSchema.set('toJSON', { getters: true, virtuals: true });
 SystemSchema.set('toObject', { getters: true, virtuals: true });
+
+SystemSchema.methods.getMembers = async function() {
+	return Member.find({ system: this.hid });
+}
+
+SystemSchema.methods.getGroups = async function() {
+	return Group.find({ system: this.hid });
+}
+
+SystemSchema.methods.getTags = async function() {
+	return Tag.find({ system: this.hid });
+}
+
+SystemSchema.methods.getMember = async function(hid) {
+	return Member.find({ system: this.hid, hid });
+}
+
+SystemSchema.methods.getGroup = async function(hid) {
+	return Group.find({ system: this.hid, hid });
+}
+
+SystemSchema.methods.getTag = async function(hid) {
+	return Tag.find({ system: this.hid, hid });
+}
 
 // SystemSchema.pre(/find/, function() {
 	// this.populate({ path: 'members', sort: 'name' })
