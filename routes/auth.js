@@ -21,13 +21,14 @@ module.exports = [
 				username: req.body.username
 			})
 			if(!account) return res.status(404).send();
-
 			if(!verify(req.body.password, account.salt, account.password))
 				return res.status(404).send();
 
+			var systems = await account.getSystems();
 			req.session.csrf = randomBytes(64).toString('hex');
-			req.session.user = account.toObject();
+			req.session.user = {... account.toObject(), systems}; 
 			delete req.session.user.password;
+			delete req.session.user.salt;
 			req.session.user.csrf = req.session.csrf;
 			
 			return res.status(200).send(req.session.user);
@@ -40,7 +41,7 @@ module.exports = [
 			if(!req.user) return res.status(404).send();
 			var user = await Login.findOne({ _id: req.user._id});
 			if(!user) return res.status(404).send()
-			user = await user.toObject({ getters: true });
+			user = {... (await user.toObject()), systems: await user.getSystems()};
 			delete user.password;
 			delete user.salt;
 			if(req.session.csrf) user.csrf = req.session.csrf;
@@ -53,6 +54,7 @@ module.exports = [
 		method: 'put',
 		func: async (req, res) => {
 			// if(!req.session.csrf) return res.status(401).send('This can route only be accessed from the dashboard.');
+			if(!req.body.password || !req.body.username) return res.status(400).send('Username and password required');
 			
 			var acc = await Login.findOne({ username: req.body.username });
 			if(acc) return res.status(409).send('Username taken');
@@ -120,6 +122,7 @@ module.exports = [
 			await acc.save();
 			acc = acc.toObject();
 			delete acc.password;
+			delete acc.salt;
 			if(req.session.csrf) acc.csrf = req.session.csrf;
 			req.session.user = acc;
 			return res.status(200).send(acc)

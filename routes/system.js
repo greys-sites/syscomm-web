@@ -1,13 +1,4 @@
-const { System } = require('../stores/systems')
-const PATCHABLE = [
-	'name',
-	'description',
-	'pronouns',
-	'color',
-	'avatar',
-	'privacy',
-	'overrides'
-];
+const { System, Patchable } = require('../stores/systems')
 
 const { applyPrivacy, genHid } = require('../utils');
 
@@ -37,7 +28,7 @@ module.exports = [
 			if(!req.user) return res.status(401).send();
 
 			var data = req.body;
-			data.account = req.user._id;
+			data.account = req.user.hid;
 			data.hid = genHid();
 
 			var sys = await System.create(data);
@@ -59,13 +50,23 @@ module.exports = [
 
 			var sys = await System.findOne({ hid: req.params.hid });
 			if(!sys) return res.status(404).send();
-			if(req.user._id != sys.account) return res.status(403).send();
+			if(req.user.hid != sys.account) return res.status(403).send();
 
+			var err = [];
 			for(var k of Object.keys(req.body)) {
-				if(!PATCHABLE.includes(k)) continue;
-				sys[k] = req.body[k];
+				if(!Patchable[k]) continue;
+				var test = true;
+				if(Patchable[k].test) test = Patchable[k].test(req.body[k]);
+				if(!test) {
+					err.push(Patchable[k].err);
+					continue;
+				}
+
+				if(Patchable[k].transform) sys[k] = Patchable[k].transform(req.body[k]);
+				else sys[k] = req.body[k];
 			}
 
+			if(err.length) return res.status(400).send({err});
 			try {
 				await sys.save();
 			} catch(e) {
@@ -83,7 +84,7 @@ module.exports = [
 
 			var sys = await System.findOne({ hid: req.params.hid });
 			if(!sys) return res.status(404).send();
-			if(req.user._id != sys.account) return res.status(403).send();
+			if(req.user.hid != sys.account) return res.status(403).send();
 
 			await System.deleteOne({ _id: sys._id });
 			return res.status(200).send();

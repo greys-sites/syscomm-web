@@ -10,10 +10,8 @@ module.exports = {
 	},
 
 	applyPrivacy: (obj, requester) => {
-		if(!obj.privacy || Object.keys(obj.privacy).length == 0)
-			return obj;
-
-		var override = [...(obj.overrides || []), obj.system ? obj.system : obj.hid].includes(requester?.hid);
+		var os = [...(obj.overrides || []), obj.account];
+		var override = os.includes(requester?.hid);
 		for(var key in Object.keys(obj.privacy)) {
 			if(obj.privacy[key]) {
 				if(!override) {
@@ -23,7 +21,6 @@ module.exports = {
 				}
 			}
 		}
-
 		if(!override) {
 			obj.overrides = [];
 			obj.privacy = {};
@@ -42,5 +39,26 @@ module.exports = {
 		}
 
 		return hid;
+	},
+
+	objTransform: (obj, keys) => {
+		var tmp = {};
+		var err = [];
+		for(var k in keys) {
+			if(!obj[k] && obj[k] !== false) {
+				tmp[k] = null;
+				continue;
+			}
+
+			var test = true;
+			if(keys[k].test) test = keys[k].test(obj[k]);
+			if(!test) err.push(keys[k].err);
+			if(keys[k].transform) obj[k] = keys[k].transform(obj[k]);
+			tmp[k] = obj[k];
+		}
+
+		if(err.length) console.log(err.join("\n"));
+
+		return tmp;
 	}
 }

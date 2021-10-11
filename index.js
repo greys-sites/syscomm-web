@@ -8,13 +8,16 @@ const mongoose = require('mongoose');
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const mongoStore = require('connect-mongo').default;
+const mongoStore = require('connect-mongo');
 
 const routes = {};
 
 app.use(sesh({
-	store: mongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+	store: mongoStore.create({
+		mongoUrl: process.env.MONGO_URI
+	}),
 	secret: process.env.SECRET,
 	resave: false,
 	saveUninitialized: false,
@@ -26,16 +29,16 @@ app.use(sesh({
 }))
 
 // csrf middleware
-app.use((req, res, next) => {
-	if(['GET', 'HEAD', 'OPTIONS'].includes(req.method))
-		return next();
-	if(!req.session.csrf) return next();
-	
-	if(req.headers['csrf-token'] !== req.session.csrf)
-		return res.status(403).send('Invalid CSRF token');
-
-	next();
-})
+// app.use((req, res, next) => {
+	// if(['GET', 'HEAD', 'OPTIONS'].includes(req.method))
+		// return next();
+	// if(!req.session.csrf) return next();
+	// 
+	// if(req.headers['csrf-token'] !== req.session.csrf)
+		// return res.status(403).send('Invalid CSRF token');
+// 
+	// next();
+// })
 
 // auth middleware
 app.use(async (req, res, next) => {
@@ -48,8 +51,9 @@ app.use(async (req, res, next) => {
 			req.verified = false;
 			return next();
 		}
-		user = user.toObject();
+		user = {... user.toObject(), systems: await user.getSystems()};
 		delete user.password;
+		delete user.salt;
 		if(req.session.csrf) user.csrf = req.session.csrf;
 	}
 
@@ -61,7 +65,10 @@ app.use(async (req, res, next) => {
 const index = fs.readFileSync(__dirname + '/frontend/public/index.html', 'utf8');
 
 const setup = async () => {
-	mongoose.connect(process.env.MONGO_URI, (err) => {
+	mongoose.connect(process.env.MONGO_URI, {
+		useUnifiedTopology: true,
+		useNewUrlParser: true
+	}, (err) => {
 		if(err) throw err;
 	})
 	var files = fs.readdirSync(__dirname + '/stores');
@@ -89,5 +96,8 @@ const setup = async () => {
 }
 
 setup()
-.then(() => app.listen(process.env.port || 8080))
+.then(() => {
+	app.listen(process.env.port || 8080);
+	console.log("ready");
+})
 .catch(console.error)
